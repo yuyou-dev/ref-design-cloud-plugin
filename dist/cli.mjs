@@ -7316,7 +7316,7 @@ var profile;
 var init_profile = __esm({
   "scripts/profile.mjs"() {
     "use strict";
-    profile = Object.freeze({ name: "Ref Design \u73E0\u5B9D\u8BBE\u8BA1\u5DE5\u4F5C\u53F0", communityUrl: "https://modelscope.cn/studios/yuyou80/ref_design_model?mode=full", browserOrigin: "https://yuyou80-ref-design-model.ms.show", apiOrigin: "https://studio-yuyou80-ref-design-model.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.0" });
+    profile = Object.freeze({ name: "Ref Design \u73E0\u5B9D\u8BBE\u8BA1\u5DE5\u4F5C\u53F0", communityUrl: "https://modelscope.cn/studios/yuyou80/ref_design_model?mode=full", browserOrigin: "https://yuyou80-ref-design-model.ms.show", apiOrigin: "https://studio-yuyou80-ref-design-model.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.1" });
   }
 });
 
@@ -20803,7 +20803,7 @@ async function connect(bridge2, show2, { now = Date.now, sleep = (ms) => new Pro
 import fs2 from "node:fs/promises";
 import path2 from "node:path";
 import { createHash } from "node:crypto";
-async function upload(bridge2, projectId, file) {
+async function upload(bridge2, projectId, file, { now = Date.now, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = {}) {
   const stat = await fs2.stat(file);
   if (!stat.isFile() || stat.size < 1 || stat.size > 5 * 1024 * 1024) throw Error("\u9644\u4EF6\u5FC5\u987B\u4E3A 1 byte\u20135 MiB \u7684\u56FE\u7247\u6587\u4EF6");
   const bytes = await fs2.readFile(file);
@@ -20811,19 +20811,41 @@ async function upload(bridge2, projectId, file) {
   const mimeType = bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) ? "image/png" : bytes[0] === 255 && bytes[1] === 216 ? "image/jpeg" : bytes.subarray(0, 4).toString() === "RIFF" && bytes.subarray(8, 12).toString() === "WEBP" ? "image/webp" : void 0;
   if (!mimeType) throw Error("\u4EC5\u652F\u6301 PNG\u3001JPEG\u3001WebP");
   const sha256 = createHash("sha256").update(bytes).digest("hex");
+  const deadline = now() + 9 * 60 * 1e3;
+  let retries = 0;
   async function call(name, args2) {
-    const r = await bridge2.call(name, args2);
-    if (r.isError) throw Error("\u9644\u4EF6\u4E0A\u4F20\u672A\u5B8C\u6210\uFF0C\u8BF7\u68C0\u67E5\u8FDE\u63A5\u72B6\u6001");
-    return r.structuredContent || JSON.parse(r.content.find((c) => c.type === "text").text);
+    const retrySafe = name === "append_attachment_chunk" || name === "complete_attachment_upload" || name === "get_project";
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const r = await bridge2.call(name, args2);
+        const value = r.structuredContent || JSON.parse(r.content.find((c) => c.type === "text").text);
+        if (r.isError) throw Object.assign(Error(value.message || "\u9644\u4EF6\u4E0A\u4F20\u672A\u5B8C\u6210"), { diagnostic: value.diagnostic });
+        return value;
+      } catch (error2) {
+        const d = error2.diagnostic;
+        const delay = Number.isFinite(d?.retryAt) ? Math.max(1e3, d.retryAt - now()) : 1e4;
+        if (!retrySafe || !d?.retryable || attempt >= 4 || retries >= 12 || now() + delay >= deadline) throw error2;
+        retries++;
+        await sleep(delay);
+        if (now() >= deadline) throw error2;
+      }
+    }
   }
   const start = await call("begin_attachment_upload", { projectId, filename: path2.basename(file), mimeType, byteLength: bytes.length, sha256 });
   const uploadId = start.uploadId;
   if (!uploadId) throw Error("\u65E0\u6548\u4E0A\u4F20\u4F1A\u8BDD");
   try {
     for (let offset = 0, index = 0; offset < bytes.length; offset += 32768, index++) await call("append_attachment_chunk", { projectId, uploadId, index, dataBase64: bytes.subarray(offset, offset + 32768).toString("base64") });
-    return await call("complete_attachment_upload", { projectId, uploadId });
+    const result2 = await call("complete_attachment_upload", { projectId, uploadId });
+    if (result2.source?.sha256 !== sha256 || result2.source?.bytes !== bytes.length) throw Error("\u9644\u4EF6\u539F\u59CB\u5B57\u8282\u6821\u9A8C\u5931\u8D25\uFF0C\u5DF2\u505C\u6B62\u751F\u6210");
+    const saved = await call("get_project", { projectId });
+    if (!result2.asset?.id || saved.project?.reference?.id !== result2.asset.id) throw Error("\u5DE5\u7A0B\u53C2\u8003\u56FE\u4E0E\u4E0A\u4F20\u7D20\u6750\u4E0D\u4E00\u81F4\uFF0C\u5DF2\u505C\u6B62\u751F\u6210");
+    return result2;
   } catch (e) {
-    await bridge2.call("cancel_attachment_upload", { projectId, uploadId });
+    try {
+      await bridge2.call("cancel_attachment_upload", { projectId, uploadId });
+    } catch {
+    }
     throw e;
   }
 }
@@ -20846,8 +20868,9 @@ try {
     } else throw Error("\u7528\u6CD5\uFF1Aconnect | status | tools | call \u5DE5\u5177\u540D [\u53C2\u6570JSON\u6587\u4EF6] | upload \u5DE5\u7A0BID \u672C\u8F6E\u9644\u4EF6\u8DEF\u5F84");
     await bridge.close();
   }
-} catch {
-  console.error("Ref Design \u8FDE\u63A5\u672A\u5B8C\u6210\uFF0C\u8BF7\u91CD\u65B0\u8FDE\u63A5\u6216\u68C0\u67E5\u63D2\u4EF6\u5B89\u88C5\u3002");
+} catch (error2) {
+  if (error2.diagnostic) console.error(JSON.stringify({ diagnostic: error2.diagnostic }));
+  console.error(command === "upload" ? "Ref Design \u9644\u4EF6\u4E0A\u4F20\u672A\u5B8C\u6210\uFF0C\u8BF7\u68C0\u67E5\u9650\u6D41\u6216\u4E0A\u4F20\u6821\u9A8C\u72B6\u6001\uFF1B\u65E0\u9700\u76F2\u76EE\u91CD\u65B0\u767B\u5F55\u3002" : "Ref Design \u8FDE\u63A5\u672A\u5B8C\u6210\uFF0C\u8BF7\u91CD\u65B0\u8FDE\u63A5\u6216\u68C0\u67E5\u63D2\u4EF6\u5B89\u88C5\u3002");
   await bridge.close();
   process.exitCode = 1;
 }

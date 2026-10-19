@@ -7316,7 +7316,7 @@ var profile;
 var init_profile = __esm({
   "scripts/profile.mjs"() {
     "use strict";
-    profile = Object.freeze({ name: "Ref Design \u73E0\u5B9D\u8BBE\u8BA1\u5DE5\u4F5C\u53F0", communityUrl: "https://modelscope.cn/studios/yuyou80/ref_design_model?mode=full", browserOrigin: "https://yuyou80-ref-design-model.ms.show", apiOrigin: "https://studio-yuyou80-ref-design-model.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.0" });
+    profile = Object.freeze({ name: "Ref Design \u73E0\u5B9D\u8BBE\u8BA1\u5DE5\u4F5C\u53F0", communityUrl: "https://modelscope.cn/studios/yuyou80/ref_design_model?mode=full", browserOrigin: "https://yuyou80-ref-design-model.ms.show", apiOrigin: "https://studio-yuyou80-ref-design-model.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.1" });
   }
 });
 

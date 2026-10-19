@@ -32,7 +32,15 @@ const existing = servers.find(s => s.name === 'ref_design_cloud');
 if (existing) {
   const transport = existing.transport || existing;
   const args = transport.args || [];
-  if (transport.command !== node || args.length !== 1 || args[0] !== entry) throw new Error('ref_design_cloud 同名连接来自不同路径，保留原配置。请人工核对后再安装。');
+  if (transport.command !== node || args.length !== 1 || args[0] !== entry) {
+    const previous = path.resolve(root, '../0.1.0/dist/start-mcp.mjs');
+    if (transport.command !== node || args.length !== 1 || args[0] !== previous) throw new Error('ref_design_cloud 同名连接来自不同路径，保留原配置。请人工核对后再安装。');
+    if (run(['mcp', 'remove', 'ref_design_cloud']).status !== 0) throw new Error('旧版本注册迁移失败');
+    if (run(['mcp', 'add', 'ref_design_cloud', '--', node, entry]).status !== 0) {
+      run(['mcp', 'add', 'ref_design_cloud', '--', node, previous]);
+      throw new Error('新版注册失败，已尝试恢复旧版本');
+    }
+  }
 } else {
   const add = run(['mcp', 'add', 'ref_design_cloud', '--', node, entry]);
   if (add.status !== 0) throw new Error('Codex MCP 注册失败；请检查 CLI 状态。');
@@ -41,4 +49,4 @@ if (fs.existsSync(skillSource)) {
   fs.mkdirSync(path.dirname(skillDestination), { recursive: true, mode: 0o700 });
   if (!fs.existsSync(skillDestination)) fs.writeFileSync(skillDestination, fs.readFileSync(skillSource), { mode: 0o600, flag: 'wx' });
 }
-console.log(JSON.stringify({ installed: true, version: '0.1.0', node, cli, mcp: 'ref_design_cloud', next: '使用返回的 node 运行 cli connect；用户自行登录授权。' }, null, 2));
+console.log(JSON.stringify({ installed: true, version: '0.1.1', node, cli, mcp: 'ref_design_cloud', next: '使用返回的 node 运行 cli connect；用户自行登录授权。' }, null, 2));

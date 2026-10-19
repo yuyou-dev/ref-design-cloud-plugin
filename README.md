@@ -4,13 +4,13 @@
 
 ## 分享入口
 
-> 请按 https://raw.githubusercontent.com/yuyou-dev/ref-design-cloud-plugin/v0.1.0/START_HERE.md 安装并连接 Ref Design 珠宝设计工作台，登录和授权由我完成。
+> 请按 https://raw.githubusercontent.com/yuyou-dev/ref-design-cloud-plugin/v0.1.1/START_HERE.md 安装并连接 Ref Design 珠宝设计工作台，登录和授权由我完成。
 
 详细流程见 [START_HERE.md](START_HERE.md)。需要管理员分配的应用账号；用户自行完成魔搭官方授权和应用登录。不会向使用者分发运营者平台 Token。
 
 ## 安装与验证
 
-先阅读 `installer/bootstrap.sh` 或 `installer/bootstrap.ps1` 再执行。版本固定 0.1.0；下载发布包和 SHA256 清单，安装至 `~/.ref-design-cloud`（Windows 为用户配置目录中的 `.ref-design-cloud`）。输出准确的 node/cli 路径；使用 `NODE CLI connect`、`NODE CLI status`、`NODE CLI tools`。工具调用参数由 `tools` 返回的 schema 决定。
+先阅读 `installer/bootstrap.sh` 或 `installer/bootstrap.ps1` 再执行。版本固定 0.1.1；下载发布包和 SHA256 清单，安装至 `~/.ref-design-cloud`（Windows 为用户配置目录中的 `.ref-design-cloud`）。输出准确的 node/cli 路径；使用 `NODE CLI connect`、`NODE CLI status`、`NODE CLI tools`。工具调用参数由 `tools` 返回的 schema 决定。
 
 同名不同来源 MCP 会停止安装；不改写其他 MCP 或已有登录。应用首先进入工程首页；工程的素材、草稿、参数和历史独立保存。Codex 工作台仅中间画布、右侧生成区域，参数通过对话引导。
 

@@ -4,6 +4,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
 import {createOnboarding} from '../scripts/onboarding.mjs';
 import {profile} from '../scripts/profile.mjs';
 import {boundFetch,credentialHeaders} from '../scripts/client.mjs';
@@ -44,5 +45,5 @@ test('bridge verifies live list_projects and does not retry unauthorized mutatio
 });
 test('CLI upload sends bytes through chunks and keeps absolute path local',async()=>{
  const {upload}=await import('../scripts/upload.mjs');const dir=await fs.mkdtemp(path.join(os.tmpdir(),'ref-upload-'));const file=path.join(dir,'input.png');const bytes=Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),Buffer.alloc(40000,7)]);await fs.writeFile(file,bytes);
- const calls=[];try{const result=await upload({call:async(name,args)=>{calls.push({name,args});return {structuredContent:name==='begin_attachment_upload'?{uploadId:'id'}:name==='complete_attachment_upload'?{asset:{id:'asset'}}:{ok:true}};}},'project',file);assert.equal(result.asset.id,'asset');assert.equal(JSON.stringify(calls).includes(dir),false);const decoded=Buffer.concat(calls.filter(c=>c.name==='append_attachment_chunk').map(c=>Buffer.from(c.args.dataBase64,'base64')));assert.deepEqual(decoded,bytes);}finally{await fs.rm(dir,{recursive:true,force:true});}
+ const calls=[];try{const result=await upload({call:async(name,args)=>{calls.push({name,args});return {structuredContent:name==='begin_attachment_upload'?{uploadId:'id'}:name==='complete_attachment_upload'?{asset:{id:'asset'},source:{sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length}}:name==='get_project'?{project:{reference:{id:'asset'}}}:{ok:true}};}},'project',file);assert.equal(result.asset.id,'asset');assert.equal(JSON.stringify(calls).includes(dir),false);const decoded=Buffer.concat(calls.filter(c=>c.name==='append_attachment_chunk').map(c=>Buffer.from(c.args.dataBase64,'base64')));assert.deepEqual(decoded,bytes);}finally{await fs.rm(dir,{recursive:true,force:true});}
 });

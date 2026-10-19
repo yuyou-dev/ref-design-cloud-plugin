@@ -1,12 +1,12 @@
-# Ref Design 云端珠宝设计：一句话安装连接（v0.1.0 beta）
+# Ref Design 云端珠宝设计：一句话安装连接（v0.1.1 beta）
 
 用户可以对 Codex 说：
 
-> 请按 https://raw.githubusercontent.com/yuyou-dev/ref-design-cloud-plugin/v0.1.0/START_HERE.md 安装并连接 Ref Design 珠宝设计工作台，登录和授权由我完成。
+> 请按 https://raw.githubusercontent.com/yuyou-dev/ref-design-cloud-plugin/v0.1.1/START_HERE.md 安装并连接 Ref Design 珠宝设计工作台，登录和授权由我完成。
 
 你正在帮助用户安装 Ref Design 云端薄连接器。自动完成下载、校验和配置，简短告知“正在安装 → 等待登录授权 → 连接核验结果”。不要索要聊天中的账号密码、令牌或后台源码。安装成功不代表已完成授权，不得虚报本次连接。
 
-1. 需要本机 Codex 桌面、浏览器和网络。版本固定 v0.1.0，仓库 https://github.com/yuyou-dev/ref-design-cloud-plugin 。先阅读版本内 `installer/bootstrap.sh`（macOS/Linux）或 `installer/bootstrap.ps1`（Windows）再下载执行，遵循宿主安装规则。安装器在用户私有目录下载官方 Node.js、必要时官方 Codex CLI，校验 Node 和连接器 SHA-256，不需要 Python、Docker 或后台源码。Windows/Linux 安装入口存在，但跨操作系统实机验证范围以 README 为准。
+1. 需要本机 Codex 桌面、浏览器和网络。版本固定 v0.1.1，仓库 https://github.com/yuyou-dev/ref-design-cloud-plugin 。先阅读版本内 `installer/bootstrap.sh`（macOS/Linux）或 `installer/bootstrap.ps1`（Windows）再下载执行，遵循宿主安装规则。安装器在用户私有目录下载官方 Node.js、必要时官方 Codex CLI，校验 Node 和连接器 SHA-256，不需要 Python、Docker 或后台源码。Windows/Linux 安装入口存在，但跨操作系统实机验证范围以 README 为准。
 2. 安装器幂等保留登录，使用 `codex mcp add ref_design_cloud -- NODE START_MCP` 注册本地 stdio。同名不同来源配置报错时停止并说明，不删除或覆盖。记录安装器返回的 `node` 和 `cli` 路径，不读取凭据文件。不需要安装其他珠宝插件。
 3. 使用连接器工具连接；如果当前聊天尚未加载新 MCP，用返回的 node 执行 cli `connect`，保持进程，打开其返回的登录地址。用户自行完成魔搭官方 OAuth 授权。不要代用户点击同意，不向用户索要平台 Token，也不读取浏览器 Cookie。
 4. 按连接器返回说明进入 https://modelscope.cn/studios/yuyou80/ref_design_model?mode=full ，由用户输入开发者另行分配的 Ref Design 账号密码，完成应用配对。平台授权和应用账号是两层独立授权。遇到授权错误明确报告，不改用运营者 Token。

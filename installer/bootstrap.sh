@@ -23,12 +23,12 @@ if ! command -v codex >/dev/null 2>&1 && [ -z "${REF_DESIGN_CODEX_BIN:-}" ]; the
  npm install --prefix "$base/tools/codex" --no-audit --no-fund @openai/codex@0.153.4
  REF_DESIGN_CODEX_BIN="$base/tools/codex/node_modules/.bin/codex"; export REF_DESIGN_CODEX_BIN
 fi
-release=https://github.com/yuyou-dev/ref-design-cloud-plugin/releases/download/v0.1.0
-curl -fSsL "$release/ref-design-cloud-0.1.0.tar.gz" -o "$base/downloads/plugin.tar.gz"
-curl -fSsL "$release/ref-design-cloud-0.1.0.sha256" -o "$base/downloads/plugin.sha256"
-expected=$(awk '$2=="ref-design-cloud-0.1.0.tar.gz" {print $1}' "$base/downloads/plugin.sha256")
+release=https://github.com/yuyou-dev/ref-design-cloud-plugin/releases/download/v0.1.1
+curl -fSsL "$release/ref-design-cloud-0.1.1.tar.gz" -o "$base/downloads/plugin.tar.gz"
+curl -fSsL "$release/ref-design-cloud-0.1.1.sha256" -o "$base/downloads/plugin.sha256"
+expected=$(awk '$2=="ref-design-cloud-0.1.1.tar.gz" {print $1}' "$base/downloads/plugin.sha256")
 actual=$(hash "$base/downloads/plugin.tar.gz" | awk '{print $1}')
 [ -n "$expected" ] && [ "$expected" = "$actual" ] || { echo '插件 SHA256 校验失败'; exit 1; }
-mkdir -p "$base/packages/0.1.0"
-tar -xzf "$base/downloads/plugin.tar.gz" -C "$base/packages/0.1.0"
-"$node" "$base/packages/0.1.0/installer/install.mjs"
+mkdir -p "$base/packages/0.1.1"
+tar -xzf "$base/downloads/plugin.tar.gz" -C "$base/packages/0.1.1"
+"$node" "$base/packages/0.1.1/installer/install.mjs"
