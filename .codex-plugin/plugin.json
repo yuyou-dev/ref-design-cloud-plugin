@@ -1,0 +1,6 @@
+{
+  "name": "ref-design-cloud",
+  "version": "0.1.0",
+  "description": "通过用户自行授权连接魔搭 Ref Design 1+1+1 珠宝设计工作台",
+  "skills": "./skills"
+}
