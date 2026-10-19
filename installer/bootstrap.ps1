@@ -21,14 +21,14 @@ if (!(Get-Command codex -ErrorAction SilentlyContinue) -and !$env:REF_DESIGN_COD
  if ($LASTEXITCODE -ne 0) { throw 'Codex CLI 安装失败' }
  $env:REF_DESIGN_CODEX_BIN = "$base/tools/codex/node_modules/.bin/codex.cmd"
 }
-$release = 'https://github.com/yuyou-dev/ref-design-cloud-plugin/releases/download/v0.1.1'
-Invoke-WebRequest "$release/ref-design-cloud-0.1.1.tar.gz" -OutFile "$base/downloads/plugin.tar.gz"
-Invoke-WebRequest "$release/ref-design-cloud-0.1.1.sha256" -OutFile "$base/downloads/plugin.sha256"
-$line = Get-Content "$base/downloads/plugin.sha256" | Where-Object { $_ -match '\s+ref-design-cloud-0.1.1.tar.gz$' }
+$release = 'https://github.com/yuyou-dev/ref-design-cloud-plugin/releases/download/v0.1.2'
+Invoke-WebRequest "$release/ref-design-cloud-0.1.2.tar.gz" -OutFile "$base/downloads/plugin.tar.gz"
+Invoke-WebRequest "$release/ref-design-cloud-0.1.2.sha256" -OutFile "$base/downloads/plugin.sha256"
+$line = Get-Content "$base/downloads/plugin.sha256" | Where-Object { $_ -match '\s+ref-design-cloud-0.1.2.tar.gz$' }
 $expected = ($line -split '\s+')[0]
 if (!$expected -or (Get-FileHash "$base/downloads/plugin.tar.gz" -Algorithm SHA256).Hash -ne $expected) { throw '插件 SHA256 校验失败' }
-New-Item -ItemType Directory -Force "$base/packages/0.1.1" | Out-Null
-& tar -xzf "$base/downloads/plugin.tar.gz" -C "$base/packages/0.1.1"
+New-Item -ItemType Directory -Force "$base/packages/0.1.2" | Out-Null
+& tar -xzf "$base/downloads/plugin.tar.gz" -C "$base/packages/0.1.2"
 if ($LASTEXITCODE -ne 0) { throw '插件解包失败' }
-& $node "$base/packages/0.1.1/installer/install.mjs"
+& $node "$base/packages/0.1.2/installer/install.mjs"
 if ($LASTEXITCODE -ne 0) { throw '插件注册失败' }

@@ -9,7 +9,7 @@ try{
  if(command==='connect'){
   process.exitCode=await connect(bridge,show);await bridge.close();
  }else{
-  if(command==='upload'&&args[0]&&args[1])show(await upload(bridge,args[0],args[1]));
+  if(command==='upload'&&args[0]&&args[1]){if(args.length!==2&&!(args.length===4&&args[2]==='--purpose'&&['reference','result'].includes(args[3])))throw Error('上传参数无效');show(await upload(bridge,args[0],args[1],{purpose:args[3]||'reference'}));}
   else if(command==='status')show(await bridge.call('ref_design_connection_status'));
   else if(command==='tools')show(await bridge.list());
   else if(command==='call'&&args[0]){

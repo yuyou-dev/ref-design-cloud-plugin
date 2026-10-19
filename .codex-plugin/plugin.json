@@ -1,6 +1,6 @@
 {
   "name": "ref-design-cloud",
-  "version": "0.1.1",
-  "description": "通过用户自行授权连接魔搭 Ref Design 1+1+1 珠宝设计工作台",
+  "version": "0.1.2",
+  "description": "在 Codex 中按 Ref Design 设计标准使用内置生图，并将作品保存到云端画布与历史。",
   "skills": "./skills"
 }

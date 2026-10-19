@@ -7316,7 +7316,7 @@ var profile;
 var init_profile = __esm({
   "scripts/profile.mjs"() {
     "use strict";
-    profile = Object.freeze({ name: "Ref Design \u73E0\u5B9D\u8BBE\u8BA1\u5DE5\u4F5C\u53F0", communityUrl: "https://modelscope.cn/studios/yuyou80/ref_design_model?mode=full", browserOrigin: "https://yuyou80-ref-design-model.ms.show", apiOrigin: "https://studio-yuyou80-ref-design-model.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.1" });
+    profile = Object.freeze({ name: "Ref Design \u73E0\u5B9D\u8BBE\u8BA1\u5DE5\u4F5C\u53F0", communityUrl: "https://modelscope.cn/studios/yuyou80/ref_design_model?mode=full", browserOrigin: "https://yuyou80-ref-design-model.ms.show", apiOrigin: "https://studio-yuyou80-ref-design-model.api-inference.modelscope.net", issuer: "https://www.modelscope.cn", version: "0.1.2" });
   }
 });
 
@@ -20803,7 +20803,8 @@ async function connect(bridge2, show2, { now = Date.now, sleep = (ms) => new Pro
 import fs2 from "node:fs/promises";
 import path2 from "node:path";
 import { createHash } from "node:crypto";
-async function upload(bridge2, projectId, file, { now = Date.now, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = {}) {
+async function upload(bridge2, projectId, file, { purpose = "reference", now = Date.now, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = {}) {
+  if (!["reference", "result"].includes(purpose)) throw Error("\u4E0A\u4F20purpose\u65E0\u6548");
   const stat = await fs2.stat(file);
   if (!stat.isFile() || stat.size < 1 || stat.size > 5 * 1024 * 1024) throw Error("\u9644\u4EF6\u5FC5\u987B\u4E3A 1 byte\u20135 MiB \u7684\u56FE\u7247\u6587\u4EF6");
   const bytes = await fs2.readFile(file);
@@ -20831,15 +20832,19 @@ async function upload(bridge2, projectId, file, { now = Date.now, sleep = (ms) =
       }
     }
   }
-  const start = await call("begin_attachment_upload", { projectId, filename: path2.basename(file), mimeType, byteLength: bytes.length, sha256 });
+  const start = await call("begin_attachment_upload", { projectId, ...purpose === "result" ? { purpose } : {}, filename: path2.basename(file), mimeType, byteLength: bytes.length, sha256 });
   const uploadId = start.uploadId;
   if (!uploadId) throw Error("\u65E0\u6548\u4E0A\u4F20\u4F1A\u8BDD");
   try {
     for (let offset = 0, index = 0; offset < bytes.length; offset += 32768, index++) await call("append_attachment_chunk", { projectId, uploadId, index, dataBase64: bytes.subarray(offset, offset + 32768).toString("base64") });
     const result2 = await call("complete_attachment_upload", { projectId, uploadId });
     if (result2.source?.sha256 !== sha256 || result2.source?.bytes !== bytes.length) throw Error("\u9644\u4EF6\u539F\u59CB\u5B57\u8282\u6821\u9A8C\u5931\u8D25\uFF0C\u5DF2\u505C\u6B62\u751F\u6210");
-    const saved = await call("get_project", { projectId });
-    if (!result2.asset?.id || saved.project?.reference?.id !== result2.asset.id) throw Error("\u5DE5\u7A0B\u53C2\u8003\u56FE\u4E0E\u4E0A\u4F20\u7D20\u6750\u4E0D\u4E00\u81F4\uFF0C\u5DF2\u505C\u6B62\u751F\u6210");
+    if (purpose === "result") {
+      if (!result2.asset?.id || result2.projectId !== projectId || result2.purpose !== "result") throw Error("\u5DE5\u7A0B\u7ED3\u679C\u7D20\u6750\u4E0E\u4E0A\u4F20\u56DE\u6267\u4E0D\u4E00\u81F4");
+    } else {
+      const saved = await call("get_project", { projectId });
+      if (!result2.asset?.id || saved.project?.reference?.id !== result2.asset.id) throw Error("\u5DE5\u7A0B\u53C2\u8003\u56FE\u4E0E\u4E0A\u4F20\u7D20\u6750\u4E0D\u4E00\u81F4\uFF0C\u5DF2\u505C\u6B62\u751F\u6210");
+    }
     return result2;
   } catch (e) {
     try {
@@ -20859,8 +20864,10 @@ try {
     process.exitCode = await connect(bridge, show);
     await bridge.close();
   } else {
-    if (command === "upload" && args[0] && args[1]) show(await upload(bridge, args[0], args[1]));
-    else if (command === "status") show(await bridge.call("ref_design_connection_status"));
+    if (command === "upload" && args[0] && args[1]) {
+      if (args.length !== 2 && !(args.length === 4 && args[2] === "--purpose" && ["reference", "result"].includes(args[3]))) throw Error("\u4E0A\u4F20\u53C2\u6570\u65E0\u6548");
+      show(await upload(bridge, args[0], args[1], { purpose: args[3] || "reference" }));
+    } else if (command === "status") show(await bridge.call("ref_design_connection_status"));
     else if (command === "tools") show(await bridge.list());
     else if (command === "call" && args[0]) {
       const input = args[1] ? JSON.parse(await fs3.readFile(args[1], "utf8")) : {};

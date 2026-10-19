@@ -50,3 +50,8 @@ test('source hash, byte count, and current project reference are verified',()=>f
   }},'project',file),kind==='reference'?/参考图/:/字节校验/);
  }
 }));
+test('result upload verifies purpose and project without replacing reference',()=>fixture(async({file,receipt})=>{
+ const calls=[];const {asset,source}=receipt;
+ const result=await upload({call:async(name,args)=>{calls.push({name,args});return {structuredContent:name==='begin_attachment_upload'?{uploadId:'result-upload'}:name==='complete_attachment_upload'?{asset,source,projectId:'project',purpose:'result'}:{ok:true}};}},'project',file,{purpose:'result'});
+ assert.equal(result.asset.id,asset.id);assert.equal(calls[0].args.purpose,'result');assert.equal(calls.some(c=>c.name==='get_project'),false);
+}));
